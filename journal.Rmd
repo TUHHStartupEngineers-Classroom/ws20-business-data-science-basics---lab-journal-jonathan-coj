@@ -16,6 +16,10 @@ output:
 knitr::opts_chunk$set(message=FALSE,warning=FALSE, cache=TRUE)
 ```
 
+# Intro
+
+As I am not quite sure how we are supposed to structure the journal, i will focus on the bigger Exercises and the challanges. The smaller Exercises can be seen below.
+
 # Bike Sales analysis 
 
 Last compiled: `r Sys.Date()`
