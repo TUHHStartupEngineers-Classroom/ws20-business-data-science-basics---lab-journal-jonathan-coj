@@ -209,9 +209,9 @@ bike_orderlines_joined_tbl %>%
   unique()
 
 bike_orderlines_wrangled_tbl <- bike_orderlines_joined_tbl %>%
-  separate(col    = category,
-           into   = c("category.1", "category.2", "category.3"),
-           sep    = " - ") %>%
+  separate(col    = location,
+           into   = c("state", "city"),
+           sep    = ", ") %>%
   mutate(total.price = price * quantity) %>%
   select(-...1, -gender) %>%
   select(-ends_with(".id")) %>%
@@ -229,13 +229,11 @@ glimpse(bike_orderlines_wrangled_tbl)
 
 library(lubridate)
 # Step 1 - Manipulate
-sales_by_year_tbl <- bike_orderlines_wrangled_tbl %>%
+sales_by_loc_tbl <- bike_orderlines_wrangled_tbl %>%
   # Select columns
-  select(order_date, total_price) %>%
-  # Add year column
-  mutate(year = year(order_date)) %>%
+  select(state, total_price) %>%
   # Grouping by year and summarizing sales
-  group_by(year) %>% 
+  group_by(state) %>% 
   summarize(sales = sum(total_price)) %>%
   # Optional: Add a column that turns the numbers into a currency format 
   # (makes it in the plot optically more appealing)
@@ -245,19 +243,23 @@ sales_by_year_tbl <- bike_orderlines_wrangled_tbl %>%
                                      prefix = "", 
                                      suffix = " €"))
 
-sales_by_year_tbl
+sales_by_loc_tbl
 # 6.1 Sales by Year ----
+```
 
+```{r plot, fig.width=10, fig.height=7}
 # Step 2 - Visualize
-sales_by_year_tbl %>%
+sales_by_loc_tbl %>%
   
   # Setup canvas with the columns year (x-axis) and sales (y-axis)
-  ggplot(aes(x = year, y = sales)) +
+  ggplot(aes(x = state, y = sales)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
   
   # Geometries
   geom_col(fill = "#2DC6D6") + # Use geom_col for a bar plot
   geom_label(aes(label = sales_text)) + # Adding labels to the bars
   geom_smooth(method = "lm", se = FALSE) + # Adding a trendline
+  
   
   # Formatting
   # scale_y_continuous(labels = scales::dollar) + # Change the y-axis. 
@@ -273,72 +275,13 @@ sales_by_year_tbl %>%
     y = "Revenue"
   )
 
-# 6.2 Sales by Year and Category 2 ----
-# Step 1 - Manipulate
-sales_by_year_cat_1_tbl <- bike_orderlines_wrangled_tbl %>%
-  
-  # Select columns and add a year
-  select(order_date, total_price, category_1) %>%
-  mutate(year = year(order_date)) %>%
-  
-  # Group by and summarize year and main catgegory
-  group_by(year, category_1) %>%
-  summarise(sales = sum(total_price)) %>%
-  ungroup() %>%
-  
-  # Format $ Text
-  mutate(sales_text = scales::dollar(sales, big.mark = ".", 
-                                     decimal.mark = ",", 
-                                     prefix = "", 
-                                     suffix = " €"))
-
-sales_by_year_cat_1_tbl 
-
-# Step 2 - Visualize
-sales_by_year_cat_1_tbl %>%
-  
-  # Set up x, y, fill
-  ggplot(aes(x = year, y = sales, fill = category_1)) +
-  
-  # Geometries
-  geom_col() + # Run up to here to get a stacked bar plot
-  
-  # Facet
-  facet_wrap(~ category_1) +
-  
-  # Formatting
-  scale_y_continuous(labels = scales::dollar_format(big.mark = ".", 
-                                                    decimal.mark = ",", 
-                                                    prefix = "", 
-                                                    suffix = " €")) +
-  labs(
-    title = "Revenue by year and main category",
-    subtitle = "Each product category has an upward trend",
-    fill = "Main category" # Changes the legend name
-  )
-
-
-# 7.0 Writing Files ----
-# 7.1 Excel ----
-#install.packages("writexl")
-library("writexl")
-bike_orderlines_wrangled_tbl %>%
-  write_xlsx("00_data/01_bike_sales/02_wrangled_data/bike_orderlines.xlsx")
-
-# 7.2 CSV ----
-bike_orderlines_wrangled_tbl %>% 
-  write_csv("00_data/01_bike_sales/02_wrangled_data/bike_orderlines.csv")
-
-# 7.3 RDS ----
-bike_orderlines_wrangled_tbl %>% 
-  write_rds("00_data/01_bike_sales/02_wrangled_data/bike_orderlines.rds")
-
-
 ```
 
 # Exercise
 Here is will just document the Exercises in case that is relevant for the class
+
 ## tidyverse
+
 ```{r, eval = TRUE}
 # This way applies to dataframes and tibbles
 vehicles <- as_tibble(cars[1:5,])
