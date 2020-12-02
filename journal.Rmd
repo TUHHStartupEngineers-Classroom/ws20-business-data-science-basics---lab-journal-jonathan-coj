@@ -311,6 +311,25 @@ sales_by_year_loc_tbl %>%
     fill = "State" # Changes the legend name
   )
 ```
+Save again and overwrite, not sure how we are supposed to handle that but to be on the save side:
+```{r, eval = TRUE}
+# 7.0 Writing Files ----
+# 7.1 Excel ----
+#install.packages("writexl")
+library("writexl")
+bike_orderlines_wrangled_tbl %>%
+  write_xlsx("00_data/01_bike_sales/02_wrangled_data/bike_orderlines.xlsx")
+
+# 7.2 CSV ----
+bike_orderlines_wrangled_tbl %>% 
+  write_csv("00_data/01_bike_sales/02_wrangled_data/bike_orderlines.csv")
+
+# 7.3 RDS ----
+bike_orderlines_wrangled_tbl %>% 
+  write_rds("00_data/01_bike_sales/02_wrangled_data/bike_orderlines.rds")
+
+```
+
 
 # Exercise
 Here is will just document the Exercises in case that is relevant for the class.
