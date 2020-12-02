@@ -193,9 +193,6 @@ library(readxl)
 bikes_tbl <- read_excel(path = "00_data/01_bike_sales/01_raw_data/bikes.xlsx")
 orderlines_tbl <- read_excel("00_data/01_bike_sales/01_raw_data/orderlines.xlsx")
 bikeshops_tbl  <- read_excel("00_data/01_bike_sales/01_raw_data/bikeshops.xlsx")
-# 3.0 Examining Data ----
-orderlines_tbl
-glimpse(bikes_tbl)
 
 # 4.0 Joining Data ----
 bike_orderlines_joined_tbl <- orderlines_tbl %>%
@@ -203,26 +200,17 @@ bike_orderlines_joined_tbl <- orderlines_tbl %>%
   left_join(bikeshops_tbl, by = c("customer.id" = "bikeshop.id"))
 bike_orderlines_joined_tbl %>% glimpse()
 # 5.0 Wrangling Data ----
-bike_orderlines_joined_tbl %>% 
-  select(category) %>%
-  filter(str_detect(category, "^Mountain")) %>% 
-  unique()
-
 bike_orderlines_wrangled_tbl <- bike_orderlines_joined_tbl %>%
   separate(col    = location,
-           into   = c("state", "city"),
+           into   = c("city", "state"),
            sep    = ", ") %>%
   mutate(total.price = price * quantity) %>%
   select(-...1, -gender) %>%
-  select(-ends_with(".id")) %>%
-  bind_cols(bike_orderlines_joined_tbl %>% select(order.id)) %>% 
-  select(order.id, contains("order"), contains("model"), contains("category"),
+  select(order.id, contains("order"), contains("state"), contains("city"),
          price, quantity, total.price,
          everything()) %>%
   rename(bikeshop = name) %>%
   set_names(names(.) %>% str_replace_all("\\.", "_"))
-glimpse(bike_orderlines_wrangled_tbl)
-
 # 6.0 Business Insights ----
 
 # 6.1 Sales by Year ----
@@ -247,7 +235,7 @@ sales_by_loc_tbl
 # 6.1 Sales by Year ----
 ```
 
-```{r plot, fig.width=10, fig.height=7}
+```{r plot, fig.width=25, fig.height=10}
 # Step 2 - Visualize
 sales_by_loc_tbl %>%
   
@@ -258,7 +246,7 @@ sales_by_loc_tbl %>%
   # Geometries
   geom_col(fill = "#2DC6D6") + # Use geom_col for a bar plot
   geom_label(aes(label = sales_text)) + # Adding labels to the bars
-  geom_smooth(method = "lm", se = FALSE) + # Adding a trendline
+ # geom_smooth(method = "lm", se = FALSE) + # Adding a trendline
   
   
   # Formatting
@@ -269,16 +257,63 @@ sales_by_loc_tbl %>%
                                                     prefix = "", 
                                                     suffix = " €")) +
   labs(
-    title    = "Revenue by year",
-    subtitle = "Upward Trend",
-    x = "Year", # Override defaults for x and y
+    title    = "Revenue by state",
+    x = "State", # Override defaults for x and y
     y = "Revenue"
   )
 
 ```
 
+```{r, eval=TRUE}
+# 6.2 Sales by Year and Category 2 ----
+# Step 1 - Manipulate
+sales_by_year_loc_tbl <- bike_orderlines_wrangled_tbl %>%
+  
+  # Select columns and add a year
+  select(order_date, total_price, state) %>%
+  mutate(year = year(order_date)) %>%
+  
+  # Group by and summarize year and main catgegory
+  group_by(year, state) %>%
+  summarise(sales = sum(total_price)) %>%
+  ungroup() %>%
+  
+  # Format $ Text
+  mutate(sales_text = scales::dollar(sales, big.mark = ".", 
+                                     decimal.mark = ",", 
+                                     prefix = "", 
+                                     suffix = " €"))
+
+sales_by_year_loc_tbl 
+```
+
+```{r plot1, fig.width=10, fig.height=10}
+# Step 2 - Visualize
+sales_by_year_loc_tbl %>%
+  
+  # Set up x, y, fill
+  ggplot(aes(x = year, y = sales, fill = state)) +
+  
+  # Geometries
+  geom_col() + # Run up to here to get a stacked bar plot
+  
+  # Facet
+  facet_wrap(~ state) +
+  
+  # Formatting
+  scale_y_continuous(labels = scales::dollar_format(big.mark = ".", 
+                                                    decimal.mark = ",", 
+                                                    prefix = "", 
+                                                    suffix = " €")) +
+  labs(
+    title = "Revenue by year and state",
+    subtitle = "Each product category has an upward trend",
+    fill = "State" # Changes the legend name
+  )
+```
+
 # Exercise
-Here is will just document the Exercises in case that is relevant for the class
+Here is will just document the Exercises in case that is relevant for the class.
 
 ## tidyverse
 
