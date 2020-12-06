@@ -233,7 +233,6 @@ bike_name <- category_html %>% map(html_nodes, css = c(".catalog-category-bikes_
 bike_price <- category_html %>% map(html_nodes, css = c(".catalog-category-bikes__price-title") ) %>%  map(html_text) %>% enframe(value = "Price")
 #merge
 bike_info <- merge(bike_name,bike_price)
-print(bike_info)
 #because its not fun, to work with this format, i wwill make a table with both name and price
 bike_info <- bike_info %>% mutate(Name_str = map(.$Name, toString) %>% str_remove_all("[\"c()]|\\n")) %>% 
   mutate(Price_str = map(.$Price, toString) %>% str_remove_all("[\"c()]|\\n|ab "))
@@ -253,7 +252,7 @@ Here is will just document the Exercises in case that is relevant for the class.
 
 ## tidyverse
 
-```{r, eval = TRUE}
+```{r, eval = FALSE}
 library(RSQLite)
 library(tidyverse)
 library(dplyr)
