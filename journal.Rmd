@@ -20,7 +20,7 @@ knitr::opts_chunk$set(message=FALSE,warning=FALSE, cache=TRUE)
 
 As I am not quite sure how we are supposed to structure the journal, i will focus on the bigger Exercises and the challanges. The smaller Exercises can be seen below.
 
-# Tidyvers
+# Tidyverse
 
 Last compiled: `r Sys.Date()`
 
@@ -198,9 +198,9 @@ for (city in city_list) {
   weather_data <- weather %>% content(as = 'parsed')
   temperature <-  weather_data$main$temp - 273.16
   weather_tbl <- weather_tbl %>% add_row(City = city, Temperature = temperature)
-  weather_tbl
+ 
 }
-
+ print(weather_tbl)
 ```
 
 ## Challenge 2.2
@@ -228,14 +228,20 @@ for (category in categorys$category) {
 }
 
 category_html <- categorys$category %>% map(read_html)
+#get all names and Prices
 bike_name <- category_html %>% map(html_nodes, css = c(".catalog-category-bikes__title-text") ) %>%  map(html_text) %>% enframe(value = "Name")
 bike_price <- category_html %>% map(html_nodes, css = c(".catalog-category-bikes__price-title") ) %>%  map(html_text) %>% enframe(value = "Price")
+#merge
 bike_info <- merge(bike_name,bike_price)
+print(bike_info)
+#because its not fun, to work with this format, i wwill make a table with both name and price
 bike_info <- bike_info %>% mutate(Name_str = map(.$Name, toString) %>% str_remove_all("[\"c()]|\\n")) %>% 
   mutate(Price_str = map(.$Price, toString) %>% str_remove_all("[\"c()]|\\n|ab "))
 bike_info_name <- strsplit(bike_info$Name_str, split = ", ") %>% unlist() %>% enframe(value = "Name")
 bike_info_price <- strsplit(bike_info$Price_str, split = ", ") %>% unlist() %>% enframe(value = "Price")
 bike_info <- merge(bike_info_name, bike_info_price)
+
+print(bike_info)
 
   
 ```
@@ -247,7 +253,18 @@ Here is will just document the Exercises in case that is relevant for the class.
 
 ## tidyverse
 
-```{r, eval = FALSE}
+```{r, eval = TRUE}
+library(RSQLite)
+library(tidyverse)
+library(dplyr)
+library(httr)
+library(rvest)     # HTML Hacking & Web Scraping
+library(xopen)   
+library(glue)
+library(jsonlite)
+library(keyring)
+library(furrr) 
+library(stringi)
 
 D <- 1000
 K <- 5
