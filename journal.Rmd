@@ -240,7 +240,7 @@ bike_info_name <- strsplit(bike_info$Name_str, split = ", ") %>% unlist() %>% en
 bike_info_price <- strsplit(bike_info$Price_str, split = ", ") %>% unlist() %>% enframe(value = "Price")
 bike_info <- merge(bike_info_name, bike_info_price)
 
-bike_info
+print(bike_info)
   
 ```
 
