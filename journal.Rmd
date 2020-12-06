@@ -240,12 +240,172 @@ bike_info_name <- strsplit(bike_info$Name_str, split = ", ") %>% unlist() %>% en
 bike_info_price <- strsplit(bike_info$Price_str, split = ", ") %>% unlist() %>% enframe(value = "Price")
 bike_info <- merge(bike_info_name, bike_info_price)
 
-print(bike_info)
+bike_info %>% glimpse()
 
   
 ```
 
+# Data Wrangling
 
+## Challenge
+Libs:
+
+```{r}
+library(vroom)
+library(tidyverse)
+library(glue)
+library(data.table)
+library(lubridate)
+```
+
+Load data sets and skip some collums:
+
+```{r, eval=FALSE}
+#define col_types
+assignee_col_types <- list(
+  id = col_character(),
+  type = col_skip(),
+  name_first = col_skip(),
+  name_last = col_skip(),
+  organization = col_character()
+)
+
+patent_col_types <- list(
+  id = col_character(),
+  type = col_skip(),
+  number = col_skip(),
+  country = col_skip(),
+  date = col_date("%Y-%m-%d"),
+  abstract = col_skip(),
+  title = col_skip(),
+  kind = col_skip(),
+  num_claims = col_skip(),
+  filename = col_skip(),
+  withdrawn = col_skip()
+)
+
+patent_assignee_col_types <- list(
+  patent_id = col_character(),
+  assignee_id = col_character(),
+  location_id = col_skip()
+)
+
+uspc_col_types <- list(
+  uuid = col_skip(),
+  patent_id = col_character(),
+  mainclass_id = col_character(),
+  subclass_id = col_skip(),
+  sequence = col_skip()
+)
+
+
+# read data from files
+assignee_tbl <- vroom(
+  file       = glue("{path}dataset/assignee.tsv"), 
+  delim      = "\t", 
+  col_types  = assignee_col_types,
+  na         = c("", "NA", "NULL")
+)
+
+patent_tbl <- vroom(
+  file       = glue("{path}dataset/patent.tsv.zip"),
+  delim      = "\t",
+  col_types  = patent_col_types,
+  na         = c("", "NA", "NULL")
+)
+
+patent_assignee_tbl <- vroom(
+  file       = glue("{path}dataset/patent_assignee.tsv"), 
+  delim      = "\t", 
+  col_types  = patent_assignee_col_types,
+  na         = c("", "NA", "NULL")
+)
+
+uspc_tbl <- vroom(
+  file       = glue("{path}dataset/uspc.tsv"), 
+  delim      = "\t",
+  col_types  = uspc_col_types,
+  na         = c("", "NA", "NULL")
+)
+```
+
+convert to data.table
+```{r, eval=FALSE}
+setDT(assignee_tbl)
+setDT(patent_tbl)
+setDT(patent_assignee_tbl)
+setDT(uspc_tbl)
+```
+
+### 1. Question
+What US company has the most patents? List the 10 US companies with the most assigned/granted patents.
+
+
+1. Merge the assignee with the patent assignee datasets with id rows. 
+2. Drop all na rows
+3. add collum with num of patents
+4. order them by decreasing patent numbers.
+
+```{r, eval=FALSE}
+merged_1_dt <- merge(assignee_tbl, patent_assignee_tbl, by.x = "id", by.y = "assignee_id")
+patent_dominance <- merged_1_dt[!is.na(organization), .(n_patents = .N), by = "organization"][
+  order(n_patents, decreasing = TRUE)][
+    1:10]
+```
+
+```{r, echo=FALSE}
+# data dir-path
+readRDS("00_data/patent_dominance.RDS")
+```
+
+Answer: The International Business Machines Corporation --> Most Patents
+
+### 2. Question
+
+
+What US company had the most patents granted in 2019? List the top 10 companies with the most new granted patents for 2019.
+
+1. alos merge patent dataset by id columns
+2. select all rows with 2019
+3.group by organizations 
+4. add number of patent
+5. order by decreasing number of patents
+```{r, eval=FALSE}
+merged_2_dt <- merge(merged_1_dt, patent_tbl, by.x = "patent_id", by.y = "id")
+patent_activity <- merged_2_dt[year(date) == 2019, .(n_patents =.N), by = "organization"][
+  order(n_patents, decreasing = TRUE)][
+    1:10]
+```
+
+```{r, echo=FALSE}
+# data dir-path
+readRDS("00_data/patent_activity.RDS")
+```
+
+Answer: The International Business Machines Corporation --> most total number of patents in 2019.
+
+### 3. Question
+What is the most innovative tech sector? For the top 10 companies with the most patents, what are the top 5 USPTO tech main classes?
+(only USA)
+
+1. combine merged table with the uspc dataset with patend_id column
+2. Filter with results from Q1
+3. group
+4. delete all rows with na values in mainclass_id
+
+```{r, eval=FALSE}
+merged_3_dt <- merge(merged_2_dt, uspc_tbl, by = "patent_id")
+tech_innovation <- merged_3_dt[organization %in% patent_dominance$organization, .(n_patents = .N, mainclass_id), by = "organization"][
+  !is.na(mainclass_id), .(occurence = .N), by = "mainclass_id"][
+    order(occurence, decreasing = TRUE)][
+      1:5]
+```
+
+```{r, echo=FALSE}
+# data dir-path
+readRDS("00_data/tech_innovation.RDS")
+```
+Answer: The most innovative tech sector is the one with the main-class-id of 257.
 
 # Exercise
 Here is will just document the Exercises in case that is relevant for the class.
